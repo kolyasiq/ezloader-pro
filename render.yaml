@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ezloader-pro
+    env: python
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.8
+    autoDeploy: true
