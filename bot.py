@@ -780,7 +780,7 @@ async def handle_download_callback(query, data: str, chat_id: str):
                     video=video_file,
                 caption=(
                     f"🎬 {user_info['info']['title'][:50]}\n"
-                    f"📦 Размер: {file_size:.
+                    f"📦 Размер: {file_size:.1f}MB\n"
                     f"📥 @ezloader_pro_bot\n\n"
                     f"✨ Нравится бот? Поддержите разработчика! /donate"
                 ),
