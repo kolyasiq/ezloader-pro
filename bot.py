@@ -805,4 +805,9 @@ async def handle_download_callback(query, data: str, chat_id: str):
         
     except Exception as e:
         await query.edit_message_text(
-            f"
+            f"❌ *Ошибка отправки:*\n`{str(e)[:100]}`\n\n"
+            f"Файл может быть слишком большим для Telegram.",
+            parse_mode='Markdown'
+        )
+        if os.path.exists(file_path):
+            os.remove(file_path)
