@@ -758,56 +758,51 @@ async def handle_download_callback(query, data: str, chat_id: str):
         )
         return
     
-        # Отправляем файл
-        try:
-            file_size = os.path.getsize(file_path) / (1024 * 1024)
-            
-            if is_audio:
-                with open(file_path, 'rb') as audio_file:
-                    await query.message.reply_audio(
-                        audio=audio_file,
-                        caption=(
-                            f"🎵 {user_info['info']['title'][:50]}\n"
-                            f"📦 Размер: {file_size:.1f}MB\n"
-                            f"📥 @ezloader_pro_bot\n\n"
-                            f"❤️ Бот бесплатный! Поддержать разработчика: /donate"
-                        ),
-                        duration=user_info['info']['duration']
-                    )
-            else:
-                with open(file_path, 'rb') as video_file:
-                    await query.message.reply_video(
-                        video=video_file,
-                        caption=(
-                            f"🎬 {user_info['info']['title'][:50]}\n"
-                            f"📦 Размер: {file_size:.1f}MB\n"
-                            f"📥 @ezloader_pro_bot\n\n"
-                            f"✨ Нравится бот? Поддержите разработчика! /donate"
-                        ),
-                        supports_streaming=True,
-                        duration=user_info['info']['duration']
-                    )
-            
-            # Удаляем файл
-            os.remove(file_path)
-            
-            # Обновляем сообщение
-            file_type = "аудио" if is_audio else "видео"
-            await query.edit_message_text(
-                f"✅ *{file_type.capitalize()} успешно отправлено!*\n"
-                f"📦 Размер файла: {file_size:.1f}MB\n"
-                f"⏱️ Время: {user_info['info']['duration']//60}:{user_info['info']['duration']%60:02d}\n\n"
-                f"✨ *Спасибо что пользуетесь ботом!*\n"
-                f"Если хотите поддержать разработчика — /donate ❤️\n\n"
-                f"Отправьте новую ссылку для следующего скачивания 🚀",
-                parse_mode='Markdown'
-            )
-            
-        except Exception as e:
-            await query.edit_message_text(
-                f"❌ *Ошибка отправки:*\n`{str(e)[:100]}`\n\n"
-                f"Файл может быть слишком большим для Telegram.",
-                parse_mode='Markdown'
-            )
-            if os.path.exists(file_path):
-                os.remove(file_path)
+    # Отправляем файл
+    try:
+        file_size = os.path.getsize(file_path) / (1024 * 1024)
+        
+        if is_audio:
+            with open(file_path, 'rb') as audio_file:
+                await query.message.reply_audio(
+                    audio=audio_file,
+                    caption=(
+                        f"🎵 {user_info['info']['title'][:50]}\n"
+                        f"📦 Размер: {file_size:.1f}MB\n"
+                        f"📥 @ezloader_pro_bot\n\n"
+                        f"❤️ Бот бесплатный! Поддержать разработчика: /donate"
+                    ),
+                    duration=user_info['info']['duration']
+                )
+        else:
+            with open(file_path, 'rb') as video_file:
+                await query.message.reply_video(
+                    video=video_file,
+                    caption=(
+                        f"🎬 {user_info['info']['title'][:50]}\n"
+                        f"📦 Размер: {file_size:.1f}MB\n"
+                        f"📥 @ezloader_pro_bot\n\n"
+                        f"✨ Нравится бот? Поддержите разработчика! /donate"
+                    ),
+                    supports_streaming=True,
+                    duration=user_info['info']['duration']
+                )
+        
+        # Удаляем файл
+        os.remove(file_path)
+        
+        # Обновляем сообщение
+        file_type = "аудио" if is_audio else "видео"
+        await query.edit_message_text(
+            f"✅ *{file_type.capitalize()} успешно отправлено!*\n"
+            f"📦 Размер файла: {file_size:.1f}MB\n"
+            f"⏱️ Время: {user_info['info']['duration']//60}:{user_info['info']['duration']%60:02d}\n\n"
+            f"✨ *Спасибо что пользуетесь ботом!*\n"
+            f"Если хотите поддержать разработчика — /donate ❤️\n\n"
+            f"Отправьте новую ссылку для следующего скачивания 🚀",
+            parse_mode='Markdown'
+        )
+        
+    except Exception as e:
+        await query.edit_message_text(
+            f"
