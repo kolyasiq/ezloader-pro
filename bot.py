@@ -1,19 +1,42 @@
 import os
+import sys
 import logging
 import re
 import asyncio
+import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import yt_dlp
 from dotenv import load_dotenv
 
-# Загружаем токен
+# ========== НАСТРОЙКИ ДЛЯ RENDER ==========
+# Проверяем что мы на Render
+IS_RENDER = 'RENDER' in os.environ or 'PORT' in os.environ
+
+if IS_RENDER:
+    print("🌍 Запуск на Render...")
+    # Принудительно добавляем пути к библиотекам для Render
+    sys.path.append('/opt/render/.local/lib/python3.10/site-packages')
+    sys.path.append('/opt/render/project/src')
+    print(f"✅ Пути к библиотекам добавлены")
+else:
+    print("💻 Локальный запуск")
+
+# Загружаем токен (сначала из .env, потом из переменных окружения Render)
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
+# Если токен не найден в .env, пробуем из переменных окружения Render
 if not TOKEN:
-    print("❌ ОШИБКА: Токен не найден! Проверьте файл .env")
+    TOKEN = os.environ.get("TELEGRAM_TOKEN")
+
+if not TOKEN:
+    print("❌ ОШИБКА: Токен не найден!")
+    print("На Render: добавьте TELEGRAM_TOKEN в Environment Variables")
+    print("Локально: создайте .env с TELEGRAM_TOKEN=ваш_токен")
     exit(1)
+
+print(f"✅ Токен получен: {TOKEN[:10]}...")
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -352,8 +375,8 @@ async def handle_report_message(update: Update, context: ContextTypes.DEFAULT_TY
     
     if chat_id not in report_data:
         # Не в режиме отчета, обрабатываем как обычно
-        await handle_message(update, context)
-        return
+        # Вместо вызова handle_message, создадим общий обработчик
+        return await handle_text_message(update, context)
     
     report_info = report_data[chat_id]
     
@@ -400,8 +423,8 @@ async def handle_report_message(update: Update, context: ContextTypes.DEFAULT_TY
             reply_markup=reply_markup
         )
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик текстовых сообщений (обычный режим)"""
+async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик ВСЕХ текстовых сообщений (ссылки, команды, и т.д.)"""
     message_text = update.message.text.strip()
     chat_id = str(update.message.chat.id)
     
@@ -471,7 +494,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
     
     # Кнопка доната (только иногда, чтобы не надоедала)
-    import random
     if random.random() < 0.3:  # 30% chance to show donate button
         keyboard.append([InlineKeyboardButton("❤️ Поддержать разработчика", callback_data="donate")])
     
@@ -758,99 +780,4 @@ async def handle_download_callback(query, data: str, chat_id: str):
                     video=video_file,
                     caption=(
                         f"🎬 {user_info['info']['title'][:50]}\n"
-                        f"📦 Размер: {file_size:.1f}MB\n"
-                        f"📥 @ezloader_pro_bot\n\n"
-                        f"✨ Нравится бот? Поддержите разработчика! /donate"
-                    ),
-                    supports_streaming=True,
-                    duration=user_info['info']['duration']
-                )
-        
-        # Удаляем файл
-        os.remove(file_path)
-        
-        # Обновляем сообщение
-        file_type = "аудио" if is_audio else "видео"
-        await query.edit_message_text(
-            f"✅ *{file_type.capitalize()} успешно отправлено!*\n"
-            f"📦 Размер файла: {file_size:.1f}MB\n"
-            f"⏱️ Время: {user_info['info']['duration']//60}:{user_info['info']['duration']%60:02d}\n\n"
-            f"✨ *Спасибо что пользуетесь ботом!*\n"
-            f"Если хотите поддержать разработчика — /donate ❤️\n\n"
-            f"Отправьте новую ссылку для следующего скачивания 🚀",
-            parse_mode='Markdown'
-        )
-        
-    except Exception as e:
-        await query.edit_message_text(
-            f"❌ *Ошибка отправки:*\n`{str(e)[:100]}`\n\n"
-            f"Файл может быть слишком большим для Telegram.",
-            parse_mode='Markdown'
-        )
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    
-    # Очищаем данные
-    if chat_id in user_data:
-        del user_data[chat_id]
-
-def main():
-    """Запуск бота"""
-    # Создаем папку для загрузок
-    os.makedirs("downloads", exist_ok=True)
-    
-    # Создаем приложение
-    app = Application.builder().token(TOKEN).build()
-    
-    # Добавляем обработчики
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("donate", donate_command))
-    app.add_handler(CommandHandler("report", report_issue_command))
-    
-    # Сначала обработчик для сообщений в режиме отчета
-    app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
-        handle_report_message
-    ))
-    
-    # Затем обычный обработчик (будет использоваться если не в режиме отчета)
-    app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        handle_message
-    ))
-    
-    app.add_handler(CallbackQueryHandler(button_callback))
-    
-    # Запускаем
-    print("=" * 60)
-    print("🤖 ezLoader PRO v5.0")
-    print("✅ 3 варианта видео + аудио MP3")
-    print("✅ Прямое меню доната с крипто-кошельками")
-    print("✅ Функциональная система отчетов о проблемах")
-    print("🟢 Бот запускается...")
-    print("=" * 60)
-    print(f"💰 Разработчик: {DONATE_INFO['author_username']}")
-    print("=" * 60)
-    
-    # Для Render
-    port = int(os.environ.get('PORT', 8443))
-    
-    if 'RENDER' in os.environ:
-        webhook_url = os.environ.get('RENDER_EXTERNAL_URL')
-        if webhook_url:
-            app.run_webhook(
-                listen="0.0.0.0",
-                port=port,
-                url_path=TOKEN,
-                webhook_url=f"{webhook_url}/{TOKEN}"
-            )
-        else:
-            app.run_polling()
-    else:
-        app.run_polling(
-            drop_pending_updates=True,
-            allowed_updates=Update.ALL_TYPES
-        )
-
-if __name__ == '__main__':
-    main()
+                        f"📦 Размер: {file_size:.
