@@ -758,29 +758,33 @@ async def handle_download_callback(query, data: str, chat_id: str):
         )
         return
     
-    # Отправляем файл
-    try:
-        file_size = os.path.getsize(file_path) / (1024 * 1024)
-        
-        if is_audio:
-            with open(file_path, 'rb') as audio_file:
-                await query.message.reply_audio(
-                    audio=audio_file,
-                    caption=(
-                        f"🎵 {user_info['info']['title'][:50]}\n"
-                        f"📦 Размер: {file_size:.1f}MB\n"
-                        f"📥 @ezloader_pro_bot\n\n"
-                        f"❤️ Бот бесплатный! Поддержать разработчика: /donate"
-                    ),
-                    duration=user_info['info']['duration']
-                )
-        else:
-            with open(file_path, 'rb') as video_file:
-                await query.message.reply_video(
-                    video=video_file,
-                caption=(
-                    f"🎬 {user_info['info']['title'][:50]}\n"
-                    f"📦 Размер: {file_size:.1f}MB\n"
-                    f"📥 @ezloader_pro_bot\n\n"
-                    f"✨ Нравится бот? Поддержите разработчика! /donate"
+        # Отправляем файл
+        try:
+            file_size = os.path.getsize(file_path) / (1024 * 1024)
+            
+            if is_audio:
+                with open(file_path, 'rb') as audio_file:
+                    await query.message.reply_audio(
+                        audio=audio_file,
+                        caption=(
+                            f"🎵 {user_info['info']['title'][:50]}\n"
+                            f"📦 Размер: {file_size:.1f}MB\n"
+                            f"📥 @ezloader_pro_bot\n\n"
+                            f"❤️ Бот бесплатный! Поддержать разработчика: /donate"
+                        ),
+                        duration=user_info['info']['duration']
+                    )  # <- Закрывающая скобка для reply_audio
+            else:
+                with open(file_path, 'rb') as video_file:
+                    await query.message.reply_video(  # <- Строка 779
+                        video=video_file,
+                        caption=(
+                            f"🎬 {user_info['info']['title'][:50]}\n"
+                            f"📦 Размер: {file_size:.1f}MB\n"
+                            f"📥 @ezloader_pro_bot\n\n"
+                            f"✨ Нравится бот? Поддержите разработчика! /donate"
+                        ),
+                        supports_streaming=True,
+                        duration=user_info['info']['duration']
+                    )  # <- Закрывающая скобка для reply_video
                 ),
