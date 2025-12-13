@@ -811,3 +811,21 @@ async def handle_download_callback(query, data: str, chat_id: str):
         )
         if os.path.exists(file_path):
             os.remove(file_path)
+def main():
+    """Главная функция запуска бота"""
+    # Создаем приложение
+    application = Application.builder().token(TOKEN).build()
+    
+    # Регистрируем обработчики
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("donate", donate_command))
+    application.add_handler(CommandHandler("report", report_issue_command))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
+    application.add_handler(CallbackQueryHandler(button_callback))
+    
+    # Запускаем бота в режиме polling (ожидание сообщений)
+    print("🤖 Бот запущен и готов к работе!")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+if __name__ == "__main__":
+    main()
