@@ -778,6 +778,9 @@ async def handle_download_callback(query, data: str, chat_id: str):
             with open(file_path, 'rb') as video_file:
                 await query.message.reply_video(
                     video=video_file,
-                    caption=(
-                        f"🎬 {user_info['info']['title'][:50]}\n"
-                        f"📦 Размер: {file_size:.
+                caption=(
+                    f"🎬 {user_info['info']['title'][:50]}\n"
+                    f"📦 Размер: {file_size:.
+                    f"📥 @ezloader_pro_bot\n\n"
+                    f"✨ Нравится бот? Поддержите разработчика! /donate"
+                ),
