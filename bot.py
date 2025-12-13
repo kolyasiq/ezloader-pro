@@ -773,10 +773,10 @@ async def handle_download_callback(query, data: str, chat_id: str):
                             f"❤️ Бот бесплатный! Поддержать разработчика: /donate"
                         ),
                         duration=user_info['info']['duration']
-                    )  # <- Закрывающая скобка для reply_audio
+                    )
             else:
                 with open(file_path, 'rb') as video_file:
-                    await query.message.reply_video(  # <- Строка 779
+                    await query.message.reply_video(
                         video=video_file,
                         caption=(
                             f"🎬 {user_info['info']['title'][:50]}\n"
@@ -786,5 +786,28 @@ async def handle_download_callback(query, data: str, chat_id: str):
                         ),
                         supports_streaming=True,
                         duration=user_info['info']['duration']
-                    )  # <- Закрывающая скобка для reply_video
-                ),
+                    )
+            
+            # Удаляем файл
+            os.remove(file_path)
+            
+            # Обновляем сообщение
+            file_type = "аудио" if is_audio else "видео"
+            await query.edit_message_text(
+                f"✅ *{file_type.capitalize()} успешно отправлено!*\n"
+                f"📦 Размер файла: {file_size:.1f}MB\n"
+                f"⏱️ Время: {user_info['info']['duration']//60}:{user_info['info']['duration']%60:02d}\n\n"
+                f"✨ *Спасибо что пользуетесь ботом!*\n"
+                f"Если хотите поддержать разработчика — /donate ❤️\n\n"
+                f"Отправьте новую ссылку для следующего скачивания 🚀",
+                parse_mode='Markdown'
+            )
+            
+        except Exception as e:
+            await query.edit_message_text(
+                f"❌ *Ошибка отправки:*\n`{str(e)[:100]}`\n\n"
+                f"Файл может быть слишком большим для Telegram.",
+                parse_mode='Markdown'
+            )
+            if os.path.exists(file_path):
+                os.remove(file_path)
